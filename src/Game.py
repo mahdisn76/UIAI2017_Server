@@ -31,10 +31,10 @@ class Game:
 
     def parse_command(self, command_str):
         try:
-            command, param = command_str.split(' ')
+            command = filter(bool, command_str.strip('\n').split(' '))
             c = command[0]
             param2 = None
-            if len(command >=3):
+            if len(command) >= 3:
                 i,j = command[2].split(',')
                 param2 = (i,j)
 
@@ -50,8 +50,8 @@ class Game:
 
 
     def send_board(self):
-        ret = ['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board]
-        self.players[self.current_player]["sock"].send(str(self.board) + '\n')
+        ret = ['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()]
+        self.players[self.current_player]["sock"].send(str(ret) + "\n")
 
     def start_server(self):
         ADDR = (self.HOST, self.PORT)
@@ -86,11 +86,15 @@ class Game:
     def start(self):
         self.current_player = 0
         for self.round in range(1,self.cycle_count):
-            self.send_board()
-            command_str = simplelinesplit(self.players[self.current_player]["sock"])
-            command, param1, param2 = self.parse_command(command_str)
-            dest = self.board.update(command=command, param1=param1, player=self.player)
-            if self.board.is_line(dest):
+            try:
+                self.send_board()
+                command_str = simplelinesplit(self.players[self.current_player]["sock"])
+                command, param1, param2 = self.parse_command(command_str)
+                dest = self.board.update(command=command, param1=param1, player=self.players[self.current_player])
+            except :
+                dest = self.board.random_work(self.players[self.current_player])
+
+            if dest is not None and self.board.is_line(dest):
                 try:
                     if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                         self.players[(self.current_player + 1) % 2]["inhand"] -= 1
@@ -102,6 +106,7 @@ class Game:
                 except:
                     self.board.random_pop(self.players[(self.current_player + 1) % 2])
 
-
+            print ['e' if item == None else 'm' if item == self.players[0] else 'o' for item in
+                   self.board.to_list()]
             self.current_player = (self.current_player + 1) % 2
 

@@ -7,7 +7,7 @@ class Cell:
         self.__checker = None
         # if c != 'e':
         #     self.__checker = Checker(x, y, c)
-    def __str__(self):
+    def to_str(self):
         return self.get_checker()
     def get_checker(self):
         return self.__checker
