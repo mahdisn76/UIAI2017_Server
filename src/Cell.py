@@ -1,17 +1,14 @@
 from src.Pos import Pos
-from src.Checker import Checker
+# from src.Checker import Checker
 
 class Cell:
-    def __init__(self, x, y, c):
+    def __init__(self, x, y):
         self.__pos = Pos(x, y)
-        self.__checker = 0
-        if c != 'e':
-            self.__checker = Checker(x, y, c)
-
-    def __init__(self):
-        self.__pos = Pos(0, 0)
-        self.__checker = 0
-
+        self.__checker = None
+        # if c != 'e':
+        #     self.__checker = Checker(x, y, c)
+    def __str__(self):
+        return self.get_checker()
     def get_checker(self):
         return self.__checker
 
