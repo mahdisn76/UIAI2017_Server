@@ -70,7 +70,7 @@ class Game:
             if cmd != "REGISTER":
                 raise Exception("INVALID COMMAND")
 
-            self.players[self.current_player] = {"name": name, "inhand": 12, 'sock': clientsock, 'index': self.current_player}
+            self.players[self.current_player] = {"name": name, "inhand": 12, "total": 12, 'sock': clientsock, 'index': self.current_player}
             self.current_player +=1
 
             if self.current_player >= 2:
@@ -95,6 +95,9 @@ class Game:
                 dest = self.board.random_work(self.players[self.current_player])
 
             if dest is not None and self.board.is_line(dest):
+                print ['e' if item == None else 'm' if item == self.players[0] else 'o' for item in
+                       self.board.to_list()], self.current_player, self.players[0]["inhand"], self.players[1]["inhand"]
+                print "dooooz!"
                 try:
                     if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                         self.players[(self.current_player + 1) % 2]["inhand"] -= 1
@@ -103,10 +106,16 @@ class Game:
                         y = param2[1]
                         if self.board.cells[(x,y)].get_checker() == self.players[(self.current_player + 1) % 2]:
                             self.board.cells[(x, y)].set_checker(None)
+                    self.players[(self.current_player + 1) % 2]["total"] -=1
                 except:
-                    self.board.random_pop(self.players[(self.current_player + 1) % 2])
+                    if self.board.random_pop(self.players[(self.current_player + 1) % 2]):
+                        self.players[(self.current_player + 1) % 2]["total"] -= 1
 
             print ['e' if item == None else 'm' if item == self.players[0] else 'o' for item in
-                   self.board.to_list()]
+                   self.board.to_list()], self.current_player, self.players[0]["inhand"], self.players[1]["inhand"]
+            if self.players[(self.current_player + 1) % 2]["total"] < 3:
+                print "winnder:", self.players[self.current_player]["name"]
+                break
+
             self.current_player = (self.current_player + 1) % 2
 

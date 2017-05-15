@@ -23,8 +23,6 @@ def send(s,m):
     s.sendall(m)
 
 send (s1,'put  1,1\n')
-send (s2,'put  1,2\n')
-send (s1,'put  0,0\n')
 
 
 

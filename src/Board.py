@@ -28,9 +28,9 @@ class Board:
 
     def to_list(self):
         l = []
-        for i in range(0,3):
-            for j in range(0,8):
-                l.append(self.cells[(j,i)].to_str())
+        for i in range(0,8):
+            for j in range(0,3):
+                l.append(self.cells[(i,j)].to_str())
         return l
 
 
@@ -96,7 +96,7 @@ class Board:
             for index, cell in self.cells.iteritems():
                 if cell.get_checker() is None:
                     dest = self.update("put", player, (cell.get_pos().getx(), cell.get_pos().gety()))
-                    player["inhand"] -= 1
+                    # player["inhand"] -= 1
                     return dest
 
         pass
@@ -104,7 +104,11 @@ class Board:
         #     index = randint(0, self.emptyCells.count())
         #     self.emptyCells[index].set_checker()
     def random_pop(self,player):
-        pass
+        for index, cell in self.cells.iteritems():
+            if cell.get_checker() == player:
+                if not(self.is_line(cell)):
+                    cell.set_checker(None)
+                    return True
 
     def update(self,command, player, param1, param2=None):
         dest = None
