@@ -1,6 +1,8 @@
 from src.Cell import Cell
 # from src.Checker import Checker
 from random import randint
+from random import shuffle
+
 
 def command_validate(command, param1, param2):
     return True
@@ -86,14 +88,20 @@ class Board:
 
     def random_work(self,player):
         if player["inhand"] == 0:
-            for index, cell in self.cells.iteritems():
+            l = range(0, 24)
+            shuffle(l)
+            for i in l:
+                cell = self.cells[(int(i / 3), i % 3)]
                 if cell.get_checker() == player:
                     for neighbour in self.get_neigbors(cell):
                         if neighbour.get_checker() is None:
                             dest = self.update("mov", player, (cell.get_pos().getx(),cell.get_pos().gety(),neighbour.get_pos().getx(),neighbour.get_pos().gety()))
                             return dest
         else:
-            for index, cell in self.cells.iteritems():
+            l = range(0, 24)
+            shuffle(l)
+            for i in l:
+                cell = self.cells[(int(i / 3), i % 3)]
                 if cell.get_checker() is None:
                     dest = self.update("put", player, (cell.get_pos().getx(), cell.get_pos().gety()))
                     # player["inhand"] -= 1
@@ -104,7 +112,10 @@ class Board:
         #     index = randint(0, self.emptyCells.count())
         #     self.emptyCells[index].set_checker()
     def random_pop(self,player):
-        for index, cell in self.cells.iteritems():
+        l = range(0,24)
+        shuffle(l)
+        for i in l:
+            cell = self.cells[(int(i / 3), i % 3)]
             if cell.get_checker() == player:
                 if not(self.is_line(cell)):
                     cell.set_checker(None)

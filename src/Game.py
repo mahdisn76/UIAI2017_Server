@@ -17,7 +17,7 @@ def simplelinesplit(sock):
 
 
 class Game:
-    cycle_count = 100
+    cycle_count = 1000
     BUFF = 1024
     HOST = '127.0.0.1'  # must be input parameter @TODO
     PORT = 9999  # must be input parameter @TODO
@@ -28,6 +28,17 @@ class Game:
         self.round = 0
         self.current_player = 0
         self.players = [None, None]
+
+    def print_game(self, is_line=False):
+        print \
+            self.round,\
+            self.current_player,\
+            ['e' if item == None else 'm' if item == self.players[0] else 'o' for item in
+               self.board.to_list()],\
+            self.players[0]["inhand"],\
+            self.players[1]["inhand"]
+        if is_line:
+            print "LINE"
 
     def parse_command(self, command_str):
         try:
@@ -50,7 +61,8 @@ class Game:
 
 
     def send_board(self):
-        ret = ['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()]
+        board_str = str(['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()])
+        ret = board_str
         self.players[self.current_player]["sock"].send(str(ret) + "\n")
 
     def start_server(self):
@@ -93,28 +105,26 @@ class Game:
                 dest = self.board.update(command=command, param1=param1, player=self.players[self.current_player])
             except :
                 dest = self.board.random_work(self.players[self.current_player])
-
             if dest is not None and self.board.is_line(dest):
-                print ['e' if item == None else 'm' if item == self.players[0] else 'o' for item in
-                       self.board.to_list()], self.current_player, self.players[0]["inhand"], self.players[1]["inhand"]
-                print "dooooz!"
+                self.print_game(True)
                 try:
-                    if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
-                        self.players[(self.current_player + 1) % 2]["inhand"] -= 1
+                    # if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
+                    #     self.players[(self.current_player + 1) % 2]["inhand"] -= 1
+                    # else:
+                    x = param2[0]
+                    y = param2[1]
+                    if self.board.cells[(x,y)].get_checker() == self.players[(self.current_player + 1) % 2]:
+                        self.board.cells[(x, y)].set_checker(None)
+                        self.players[(self.current_player + 1) % 2]["total"] -= 1
                     else:
-                        x = param2[0]
-                        y = param2[1]
-                        if self.board.cells[(x,y)].get_checker() == self.players[(self.current_player + 1) % 2]:
-                            self.board.cells[(x, y)].set_checker(None)
-                    self.players[(self.current_player + 1) % 2]["total"] -=1
+                        raise Exception("Not enemy checker")
                 except:
                     if self.board.random_pop(self.players[(self.current_player + 1) % 2]):
                         self.players[(self.current_player + 1) % 2]["total"] -= 1
 
-            print ['e' if item == None else 'm' if item == self.players[0] else 'o' for item in
-                   self.board.to_list()], self.current_player, self.players[0]["inhand"], self.players[1]["inhand"]
+            self.print_game()
             if self.players[(self.current_player + 1) % 2]["total"] < 3:
-                print "winnder:", self.players[self.current_player]["name"]
+                print "winner:", self.players[self.current_player]["name"]
                 break
 
             self.current_player = (self.current_player + 1) % 2
