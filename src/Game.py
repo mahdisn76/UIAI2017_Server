@@ -19,7 +19,7 @@ def simplelinesplit(sock):
 class Game:
     cycle_count = 1000
     BUFF = 1024
-    HOST = '127.0.0.1'  # must be input parameter @TODO
+    HOST = '0.0.0.0'  # must be input parameter @TODO
     PORT = 9999  # must be input parameter @TODO
 
 
@@ -29,16 +29,15 @@ class Game:
         self.current_player = 0
         self.players = [None, None]
 
-    def print_game(self, is_line=False):
-        print \
-            self.round,\
-            self.current_player,\
-            ['e' if item == None else 'm' if item == self.players[0] else 'o' for item in
-               self.board.to_list()],\
-            self.players[0]["inhand"],\
+    def __str__(self):
+        ret = "%d %d %s %d,%d" % (
+            self.round,
+            self.current_player,
+            ','.join(['e' if item == None else '0' if item == self.players[0] else '1' for item in self.board.to_list()]),
+            self.players[0]["inhand"],
             self.players[1]["inhand"]
-        if is_line:
-            print "LINE"
+        )
+        return ret
 
     def parse_command(self, command_str):
         try:
@@ -61,8 +60,8 @@ class Game:
 
 
     def send_board(self):
-        board_str = str(['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()])
-        ret = board_str
+        board_str = ','.join(['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()])
+        ret = board_str + "," + "%d,%d,%d" % (self.players[self.current_player]["inhand"], self.players[1 - self.current_player]["inhand"], self.round)
         self.players[self.current_player]["sock"].send(str(ret) + "\n")
 
     def start_server(self):
@@ -90,6 +89,8 @@ class Game:
                 return True
             # except:
             #     raise Exception(" Cannot Register")
+        from time import sleep
+        r=sleep(1)
 
 
 
@@ -106,26 +107,26 @@ class Game:
             except :
                 dest = self.board.random_work(self.players[self.current_player])
             if dest is not None and self.board.is_line(dest):
-                self.print_game(True)
+                print str(self)
                 try:
                     # if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                     #     self.players[(self.current_player + 1) % 2]["inhand"] -= 1
                     # else:
                     x = param2[0]
                     y = param2[1]
-                    if self.board.cells[(x,y)].get_checker() == self.players[(self.current_player + 1) % 2]:
+                    if self.board.cells[(x,y)].get_checker() == self.players[1 - self.current_player]:
                         self.board.cells[(x, y)].set_checker(None)
-                        self.players[(self.current_player + 1) % 2]["total"] -= 1
+                        self.players[1 - self.current_player]["total"] -= 1
                     else:
-                        raise Exception("Not enemy checker")
+                        raise Exception("Choosen checker for POP is not an enemy checker.")
                 except:
-                    if self.board.random_pop(self.players[(self.current_player + 1) % 2]):
-                        self.players[(self.current_player + 1) % 2]["total"] -= 1
+                    if self.board.random_pop(self.players[1 - self.current_player]):
+                        self.players[1 - self.current_player]["total"] -= 1
 
-            self.print_game()
-            if self.players[(self.current_player + 1) % 2]["total"] < 3:
-                print "winner:", self.players[self.current_player]["name"]
+            print str(self)
+            if self.players[1 - self.current_player]["total"] < 3:
+                print "winner %d" % self.current_player
                 break
 
-            self.current_player = (self.current_player + 1) % 2
+            self.current_player = 1 - self.current_player
 

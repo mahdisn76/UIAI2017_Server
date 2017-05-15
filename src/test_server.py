@@ -14,15 +14,16 @@ s2.sendall('REGISTER team2\n')
 i = 0
 def send(s,m):
     global i
-    sleep(1)
+    # sleep(1)
     data = s.recv(1024)
-    print i, repr(data)
+    print i, str(data)
     i += 1
     i %= 2
     # sleep(2)
     s.sendall(m)
-
-send (s1,'put  1,1\n')
+while True:
+    send (s1,'put  1,1\n')
+    send (s2,'put  1,1\n')
 
 
 
