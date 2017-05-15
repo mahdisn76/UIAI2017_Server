@@ -1,12 +1,14 @@
 from src.Board import Board
 from socket import *
 import thread
+import select
 
 
 def simplelinesplit(sock):
     data = ""
     try:
         while True:
+            # sock.settimeout(1)
             data += sock.recv(1)
             if len(data) > 0 and data[-1] == '\n':
                 break
@@ -97,6 +99,11 @@ class Game:
 
 
     def start(self):
+        from datetime import datetime
+        gamename = "%s__%s" % (self.players[0]["name"],self.players[1]["name"])
+        filename = "%s_%s" % (datetime.now().strftime("%Y%m%d%H%M%S"),gamename)
+        f = open(filename,'w')
+        f.write("START %s %s %s\n" % (self.players[0]["name"],self.players[1]["name"], gamename))
         self.current_player = 0
         for self.round in range(1,self.cycle_count):
             try:
@@ -107,7 +114,7 @@ class Game:
             except :
                 dest = self.board.random_work(self.players[self.current_player])
             if dest is not None and self.board.is_line(dest):
-                print str(self)
+                f.write(str(self) + "\n")
                 try:
                     # if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                     #     self.players[(self.current_player + 1) % 2]["inhand"] -= 1
@@ -123,10 +130,12 @@ class Game:
                     if self.board.random_pop(self.players[1 - self.current_player]):
                         self.players[1 - self.current_player]["total"] -= 1
 
-            print str(self)
+            f.write(str(self) + "\n")
             if self.players[1 - self.current_player]["total"] < 3:
+                f.write("winner %d\n" % self.current_player)
                 print "winner %d" % self.current_player
                 break
 
             self.current_player = 1 - self.current_player
 
+        f.close()

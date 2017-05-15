@@ -19,7 +19,7 @@ def send(s,m):
     print i, str(data)
     i += 1
     i %= 2
-    # sleep(2)
+    sleep(5)
     s.sendall(m)
 while True:
     send (s1,'put  1,1\n')
