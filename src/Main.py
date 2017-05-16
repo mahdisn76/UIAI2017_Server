@@ -1,5 +1,3 @@
-from socket import *
-import thread
 from Game import Game
 
 

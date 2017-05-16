@@ -88,7 +88,7 @@ class Board:
 
     def random_work(self,player):
         if player["inhand"] == 0:
-            l = range(0, 24)
+            l = list(range(0, 24))
             shuffle(l)
             for i in l:
                 cell = self.cells[(int(i / 3), i % 3)]
@@ -96,23 +96,23 @@ class Board:
                     for neighbour in self.get_neigbors(cell):
                         if neighbour.get_checker() is None:
                             dest = self.update("mov", player, (cell.get_pos().getx(),cell.get_pos().gety(),neighbour.get_pos().getx(),neighbour.get_pos().gety()))
-                            return dest
+                            return dest[0]
         else:
-            l = range(0, 24)
+            l = list(range(0, 24))
             shuffle(l)
             for i in l:
                 cell = self.cells[(int(i / 3), i % 3)]
                 if cell.get_checker() is None:
                     dest = self.update("put", player, (cell.get_pos().getx(), cell.get_pos().gety()))
                     # player["inhand"] -= 1
-                    return dest
+                    return dest[0]
 
         pass
         # if player.inhandcheckernumber > 0:
         #     index = randint(0, self.emptyCells.count())
         #     self.emptyCells[index].set_checker()
     def random_pop(self,player):
-        l = range(0,24)
+        l = list(range(0,24))
         shuffle(l)
         for i in l:
             cell = self.cells[(int(i / 3), i % 3)]
@@ -123,6 +123,7 @@ class Board:
 
     def update(self,command, player, param1, param2=None):
         dest = None
+        isRandom = False
         try:
             if not command_validate(command, param1, param2):
                 raise Exception("wrong command")
@@ -157,8 +158,9 @@ class Board:
         except Exception as e:
             print(e.message)
             dest = self.random_work(player)
+            isRandom = True
 
-        return dest
+        return dest, isRandom
 
 
 

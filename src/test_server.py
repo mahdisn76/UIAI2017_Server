@@ -16,7 +16,7 @@ def send(s,m):
     global i
     # sleep(1)
     data = s.recv(1024)
-    print i, str(data)
+    print(i, str(data))
     i += 1
     i %= 2
     sleep(5)

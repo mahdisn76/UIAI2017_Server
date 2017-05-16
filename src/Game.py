@@ -1,7 +1,6 @@
 from src.Board import Board
 from socket import *
-import thread
-import select
+
 
 
 def simplelinesplit(sock):
@@ -9,10 +8,10 @@ def simplelinesplit(sock):
     try:
         while True:
             # sock.settimeout(1)
-            data += sock.recv(1)
+            data += (sock.recv(1).decode())
             if len(data) > 0 and data[-1] == '\n':
                 break
-    except:
+    except Exception as e:
         pass
     finally:
         return data
@@ -43,7 +42,7 @@ class Game:
 
     def parse_command(self, command_str):
         try:
-            command = filter(bool, command_str.strip('\n').split(' '))
+            command = list(filter(bool, command_str.strip('\n').split(' ')))
             c = command[0]
             param2 = None
             if len(command) >= 3:
@@ -64,7 +63,7 @@ class Game:
     def send_board(self):
         board_str = ','.join(['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()])
         ret = board_str + "," + "%d,%d,%d" % (self.players[self.current_player]["inhand"], self.players[1 - self.current_player]["inhand"], self.round)
-        self.players[self.current_player]["sock"].send(str(ret) + "\n")
+        self.players[self.current_player]["sock"].send((str(ret) + "\n").encode())
 
     def start_server(self):
         ADDR = (self.HOST, self.PORT)
@@ -73,9 +72,9 @@ class Game:
         serversock.bind(ADDR)
         serversock.listen(5)
         while 1:
-            print 'waiting for Player...'
+            print('waiting for Player...')
             clientsock, addr = serversock.accept()
-            print '...connected from:', addr
+            print('...connected from:', addr)
             # try:
             data = simplelinesplit(clientsock)
             data = data.replace('\n', '').replace('\r', '')
@@ -87,7 +86,7 @@ class Game:
             self.current_player +=1
 
             if self.current_player >= 2:
-                print "%s and %s joned. ready to start" % (self.players[0],self.players[1])
+                print("%s and %s joned. ready to start" % (self.players[0],self.players[1]))
                 return True
             # except:
             #     raise Exception(" Cannot Register")
@@ -104,17 +103,22 @@ class Game:
         filename = "%s_%s" % (datetime.now().strftime("%Y%m%d%H%M%S"),gamename)
         f = open(filename,'w')
         f.write("START %s %s %s\n" % (self.players[0]["name"],self.players[1]["name"], gamename))
+
         self.current_player = 0
+
         for self.round in range(1,self.cycle_count):
             try:
                 self.send_board()
                 command_str = simplelinesplit(self.players[self.current_player]["sock"])
                 command, param1, param2 = self.parse_command(command_str)
-                dest = self.board.update(command=command, param1=param1, player=self.players[self.current_player])
-            except :
+                dest, isRandom = self.board.update(command=command, param1=param1, player=self.players[self.current_player])
+            except Exception as e:
+                isRandom = True
                 dest = self.board.random_work(self.players[self.current_player])
+
             if dest is not None and self.board.is_line(dest):
-                f.write(str(self) + "\n")
+                f.write("%s %sD\n" % (str(self), "R" if isRandom else ""))
+                isRandom = False
                 try:
                     # if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                     #     self.players[(self.current_player + 1) % 2]["inhand"] -= 1
@@ -129,11 +133,12 @@ class Game:
                 except:
                     if self.board.random_pop(self.players[1 - self.current_player]):
                         self.players[1 - self.current_player]["total"] -= 1
+                        isRandom = True
 
-            f.write(str(self) + "\n")
+            f.write("%s %s\n" % (str(self), "R" if isRandom else ""))
+
             if self.players[1 - self.current_player]["total"] < 3:
                 f.write("winner %d\n" % self.current_player)
-                print "winner %d" % self.current_player
                 break
 
             self.current_player = 1 - self.current_player
