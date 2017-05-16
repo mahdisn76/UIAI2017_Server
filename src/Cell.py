@@ -1,5 +1,4 @@
-from src.Pos import Pos
-# from src.Checker import Checker
+from Pos import Pos
 
 class Cell:
     def __init__(self, x, y):

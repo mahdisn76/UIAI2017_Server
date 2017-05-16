@@ -1,4 +1,4 @@
-from src.Board import Board
+from Board import Board
 from socket import *
 
 
@@ -29,6 +29,7 @@ class Game:
         self.round = 0
         self.current_player = 0
         self.players = [None, None]
+        self.filename = None
 
     def __str__(self):
         ret = "%d %d %s %d,%d" % (
@@ -100,8 +101,9 @@ class Game:
     def start(self):
         from datetime import datetime
         gamename = "%s__%s" % (self.players[0]["name"],self.players[1]["name"])
-        filename = "%s_%s" % (datetime.now().strftime("%Y%m%d%H%M%S"),gamename)
-        f = open(filename,'w')
+        if not self.filename:
+            self.filename = "%s_%s" % (datetime.now().strftime("%Y%m%d%H%M%S"),gamename)
+        f = open(self.filename,'w')
         f.write("START %s %s %s\n" % (self.players[0]["name"],self.players[1]["name"], gamename))
 
         self.current_player = 0
@@ -141,6 +143,20 @@ class Game:
                 f.write("winner %d\n" % self.current_player)
                 break
 
+            if not dest:
+                score_0 = 0
+                score_1 = 0
+                for i in range(0,24):
+                    cell = self.board.cells[(int(i / 3), i % 3)]
+                    if cell.get_checker() == self.players[0]:
+                        score_0 +=1
+                    elif cell.get_checker() == self.players[1]:
+                        score_1 +=1
+                if score_0 == score_1:
+                    f.write("draw\n")
+                else:
+                    f.write("winner %d\n" % 0 if score_0 > score_1 else 1)
+                break
             self.current_player = 1 - self.current_player
 
         f.close()
