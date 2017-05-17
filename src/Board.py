@@ -1,6 +1,4 @@
-from src.Cell import Cell
-# from src.Checker import Checker
-from random import randint
+from Cell import Cell
 from random import shuffle
 
 
@@ -56,10 +54,20 @@ class Board:
         if self.cells[(x,0)].get_checker() == self.cells[(x,1)].get_checker() and self.cells[(x,0)].get_checker() == self.cells[(x,2)].get_checker():
             return True
 
-        for i in range((x-2) % 8, x+1):
-            if self.cells[(i, y)].get_checker() == self.cells[((i+1) % 8, y)].get_checker() and self.cells[
-                (i, y)].get_checker() == self.cells[((i+2) % 8, y)].get_checker():
+        if x%2 == 0:
+            if  self.cells[((x-1) % 8, y)].get_checker() == self.cells[(x, y)].get_checker() and \
+                self.cells[((x-2) % 8, y)].get_checker() == self.cells[(x, y)].get_checker():
                 return True
+
+            if  self.cells[((x+1) % 8, y)].get_checker() == self.cells[(x, y)].get_checker() and \
+                self.cells[((x+2) % 8, y)].get_checker() == self.cells[(x, y)].get_checker():
+                return True
+        else:
+            if  self.cells[((x-1) % 8, y)].get_checker() == self.cells[(x, y)].get_checker() and \
+                self.cells[((x+1) % 8, y)].get_checker() == self.cells[(x, y)].get_checker():
+                return True
+
+
         return False
 
     def get_lines(self, x, y):
