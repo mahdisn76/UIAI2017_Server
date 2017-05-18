@@ -126,19 +126,28 @@ class Game:
             if dest is not None and self.board.is_line(dest):
                 self.logfile.write("%s %sD\n" % (str(self), "R" if isRandom else ""))
                 isRandom = False
+                all_is_line = True
                 try:
+                    l = list(range(0, 24))
+                    for i in l:
+                        cell = self.board.cells[(int(i / 3), i % 3)]
+                        if cell.get_checker() == self.players[1 - self.current_player]:
+                            if not (self.board.is_line(cell)):
+                                all_is_line = False
+
                     # if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                     #     self.players[(self.current_player + 1) % 2]["inhand"] -= 1
                     # else:
-                    x = param2[0]
-                    y = param2[1]
-                    if self.board.cells[(x,y)].get_checker() == self.players[1 - self.current_player]:
+                    x = int(param2[0])
+                    y = int(param2[1])
+                    if self.board.cells[(x,y)].get_checker() == self.players[1 - self.current_player] and\
+                        (all_is_line or not self.board.is_line(cell)):
                         self.board.cells[(x, y)].set_checker(None)
                         self.players[1 - self.current_player]["total"] -= 1
                     else:
                         raise Exception("Choosen checker for POP is not an enemy checker.")
                 except:
-                    if self.board.random_pop(self.players[1 - self.current_player]):
+                    if self.board.random_pop(self.players[1 - self.current_player], all_is_line):
                         self.players[1 - self.current_player]["total"] -= 1
                         isRandom = True
 
