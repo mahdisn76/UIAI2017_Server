@@ -164,7 +164,7 @@ class Board:
                 else:
                     raise Exception("wrong command")
         except Exception as e:
-            print(e.message)
+            print("%s: %s %s %s" % (e.message,str(command), str(param1), str(param2)))
             dest = self.random_work(player)
             isRandom = True
 
