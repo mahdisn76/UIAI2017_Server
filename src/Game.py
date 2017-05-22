@@ -1,5 +1,5 @@
 from Board import Board
-from socket import *
+from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 
 
 
