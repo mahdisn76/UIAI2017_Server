@@ -119,13 +119,13 @@ class Board:
         # if player.inhandcheckernumber > 0:
         #     index = randint(0, self.emptyCells.count())
         #     self.emptyCells[index].set_checker()
-    def random_pop(self,player):
+    def random_pop(self,player, all_is_line):
         l = list(range(0,24))
         shuffle(l)
         for i in l:
             cell = self.cells[(int(i / 3), i % 3)]
             if cell.get_checker() == player:
-                if not(self.is_line(cell)):
+                if not(self.is_line(cell)) or all_is_line:
                     cell.set_checker(None)
                     return True
 
@@ -164,7 +164,7 @@ class Board:
                 else:
                     raise Exception("wrong command")
         except Exception as e:
-            print(e.message)
+            print("%s: %s %s %s" % (e.message,str(command), str(param1), str(param2)))
             dest = self.random_work(player)
             isRandom = True
 

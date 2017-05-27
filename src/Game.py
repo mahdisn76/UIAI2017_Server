@@ -1,5 +1,5 @@
 from Board import Board
-from socket import *
+from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 
 
 
@@ -7,7 +7,7 @@ def simplelinesplit(sock):
     data = ""
     try:
         while True:
-            # sock.settimeout(1)
+            sock.settimeout(1)
             data += (sock.recv(1).decode())
             if len(data) > 0 and data[-1] == '\n':
                 break
@@ -30,6 +30,8 @@ class Game:
         self.current_player = 0
         self.players = [None, None]
         self.filename = None
+        self.logfile = None
+        self.messagefile = None
 
     def __str__(self):
         ret = "%d %d %s %d,%d" % (
@@ -65,6 +67,7 @@ class Game:
         board_str = ','.join(['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()])
         ret = board_str + "," + "%d,%d,%d" % (self.players[self.current_player]["inhand"], self.players[1 - self.current_player]["inhand"], self.round)
         self.players[self.current_player]["sock"].send((str(ret) + "\n").encode())
+        self.messagefile.write("S %d: %s" % (self.round, (str(ret) + "\n").encode()))
 
     def start_server(self):
         ADDR = (self.HOST, self.PORT)
@@ -103,8 +106,9 @@ class Game:
         gamename = "%s__%s" % (self.players[0]["name"],self.players[1]["name"])
         if not self.filename:
             self.filename = "%s_%s" % (datetime.now().strftime("%Y%m%d%H%M%S"),gamename)
-        f = open(self.filename,'w')
-        f.write("START %s %s %s\n" % (self.players[0]["name"],self.players[1]["name"], gamename))
+        self.logfile = open(self.filename,'w')
+        self.messagefile = open("%s.messagelog" % self.filename,'w')
+        self.logfile.write("START %s %s %s\n" % (self.players[0]["name"],self.players[1]["name"], gamename))
 
         self.current_player = 0
 
@@ -112,6 +116,7 @@ class Game:
             try:
                 self.send_board()
                 command_str = simplelinesplit(self.players[self.current_player]["sock"])
+                self.messagefile.write("R %d: %s" % (self.round, command_str))
                 command, param1, param2 = self.parse_command(command_str)
                 dest, isRandom = self.board.update(command=command, param1=param1, player=self.players[self.current_player])
             except Exception as e:
@@ -119,28 +124,37 @@ class Game:
                 dest = self.board.random_work(self.players[self.current_player])
 
             if dest is not None and self.board.is_line(dest):
-                f.write("%s %sD\n" % (str(self), "R" if isRandom else ""))
+                self.logfile.write("%s %sD\n" % (str(self), "R" if isRandom else ""))
                 isRandom = False
+                all_is_line = True
                 try:
+                    l = list(range(0, 24))
+                    for i in l:
+                        cell = self.board.cells[(int(i / 3), i % 3)]
+                        if cell.get_checker() == self.players[1 - self.current_player]:
+                            if not (self.board.is_line(cell)):
+                                all_is_line = False
+
                     # if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                     #     self.players[(self.current_player + 1) % 2]["inhand"] -= 1
                     # else:
-                    x = param2[0]
-                    y = param2[1]
-                    if self.board.cells[(x,y)].get_checker() == self.players[1 - self.current_player]:
+                    x = int(param2[0])
+                    y = int(param2[1])
+                    if self.board.cells[(x,y)].get_checker() == self.players[1 - self.current_player] and\
+                        (all_is_line or not self.board.is_line(cell)):
                         self.board.cells[(x, y)].set_checker(None)
                         self.players[1 - self.current_player]["total"] -= 1
                     else:
                         raise Exception("Choosen checker for POP is not an enemy checker.")
                 except:
-                    if self.board.random_pop(self.players[1 - self.current_player]):
+                    if self.board.random_pop(self.players[1 - self.current_player], all_is_line):
                         self.players[1 - self.current_player]["total"] -= 1
                         isRandom = True
 
-            f.write("%s %s\n" % (str(self), "R" if isRandom else ""))
+            self.logfile.write("%s %s\n" % (str(self), "R" if isRandom else ""))
 
             if self.players[1 - self.current_player]["total"] < 3:
-                f.write("winner %d\n" % self.current_player)
+                self.logfile.write("winner %d\n" % self.current_player)
                 break
 
             if not dest:
@@ -153,10 +167,14 @@ class Game:
                     elif cell.get_checker() == self.players[1]:
                         score_1 +=1
                 if score_0 == score_1:
-                    f.write("draw\n")
+                    self.logfile.write("draw\n")
                 else:
-                    f.write("winner %d\n" % 0 if score_0 > score_1 else 1)
+                    self.logfile.write("winner %d\n" % 0 if score_0 > score_1 else 1)
                 break
             self.current_player = 1 - self.current_player
 
-        f.close()
+        self.players[0]["sock"].send("FINISH".encode())
+        self.players[1]["sock"].send("FINISH".encode())
+
+        self.logfile.close()
+        self.messagefile.close()
