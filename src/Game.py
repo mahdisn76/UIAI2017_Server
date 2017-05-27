@@ -7,7 +7,7 @@ def simplelinesplit(sock):
     data = ""
     try:
         while True:
-            # sock.settimeout(1)
+            sock.settimeout(1)
             data += (sock.recv(1).decode())
             if len(data) > 0 and data[-1] == '\n':
                 break
