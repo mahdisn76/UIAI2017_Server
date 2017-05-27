@@ -154,13 +154,14 @@ class Board:
                 y1 = param1[1]
                 x2 = param1[2]
                 y2 = param1[3]
-
-                if self.cells[(x2,y2)] in self.get_neigbors(self.cells[(x1, y1)]) and \
-                        self.cells[(x1, y1)].get_checker() == player and \
-                        self.cells[(x2, y2)].get_checker() is None:
-                    self.cells[(x1, y1)].set_checker(None)
-                    self.cells[(x2, y2)].set_checker(player)
-                    dest = self.cells[(x2, y2)]
+                cs = self.cells[(x1, y1)]
+                cd = self.cells[(x2, y2)]
+                if cd in self.get_neigbors(cs) and \
+                        cs.get_checker() == player and \
+                        cd.get_checker() is None:
+                    cs.set_checker(None)
+                    cd.set_checker(player)
+                    dest = cd
                 else:
                     raise Exception("wrong command")
         except Exception as e:

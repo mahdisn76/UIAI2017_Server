@@ -7,7 +7,7 @@ def simplelinesplit(sock):
     data = ""
     try:
         while True:
-            sock.settimeout(1)
+            # sock.settimeout(1)
             data += (sock.recv(1).decode())
             if len(data) > 0 and data[-1] == '\n':
                 break
@@ -50,7 +50,7 @@ class Game:
             param2 = None
             if len(command) >= 3:
                 i,j = command[2].split(',')
-                param2 = (i,j)
+                param2 = (int(i),int(j))
 
             if c == 'put':
                 i1,j1 = command[1].split(',')
@@ -134,19 +134,22 @@ class Game:
                         if cell.get_checker() == self.players[1 - self.current_player]:
                             if not (self.board.is_line(cell)):
                                 all_is_line = False
+                                break
 
                     # if self.players[(self.current_player + 1) % 2]["inhand"] > 0:
                     #     self.players[(self.current_player + 1) % 2]["inhand"] -= 1
                     # else:
                     x = int(param2[0])
                     y = int(param2[1])
-                    if self.board.cells[(x,y)].get_checker() == self.players[1 - self.current_player] and\
-                        (all_is_line or not self.board.is_line(cell)):
-                        self.board.cells[(x, y)].set_checker(None)
+                    c = self.board.cells[(x,y)]
+                    if c.get_checker() == self.players[1 - self.current_player] and\
+                        (all_is_line or not self.board.is_line(c)):
+                        c.set_checker(None)
                         self.players[1 - self.current_player]["total"] -= 1
                     else:
                         raise Exception("Choosen checker for POP is not an enemy checker.")
                 except:
+
                     if self.board.random_pop(self.players[1 - self.current_player], all_is_line):
                         self.players[1 - self.current_player]["total"] -= 1
                         isRandom = True
@@ -157,7 +160,7 @@ class Game:
                 self.logfile.write("winner %d\n" % self.current_player)
                 break
 
-            if not dest:
+            if dest is None:
                 score_0 = 0
                 score_1 = 0
                 for i in range(0,24):
