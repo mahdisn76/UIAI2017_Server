@@ -7,7 +7,7 @@ def simplelinesplit(sock):
     data = ""
     try:
         while True:
-            sock.settimeout(1)
+            sock.settimeout(2)
             data += (sock.recv(1).decode())
             if len(data) > 0 and data[-1] == '\n':
                 break
@@ -67,17 +67,17 @@ class Game:
         board_str = ','.join(['e' if item == None else 'm' if item == self.players[self.current_player] else 'o' for item in self.board.to_list()])
         ret = board_str + "," + "%d,%d,%d" % (self.players[self.current_player]["inhand"], self.players[1 - self.current_player]["inhand"], self.round)
         self.players[self.current_player]["sock"].send((str(ret) + "\n").encode())
-        self.messagefile.write("S %d: %s" % (self.round, (str(ret) + "\n").encode()))
+        self.messagefile.write("S %d: %s" % (self.round, (str(ret) + "\n")))
 
     def start_server(self):
         ADDR = (self.HOST, self.PORT)
-        serversock = socket(AF_INET, SOCK_STREAM)
-        serversock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        serversock.bind(ADDR)
-        serversock.listen(5)
+        self.serversock = socket(AF_INET, SOCK_STREAM)
+        self.serversock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.serversock.bind(ADDR)
+        self.serversock.listen(5)
         while 1:
             print('waiting for Player...')
-            clientsock, addr = serversock.accept()
+            clientsock, addr = self.serversock.accept()
             print('...connected from:', addr)
             # try:
             data = simplelinesplit(clientsock)
@@ -90,7 +90,7 @@ class Game:
             self.current_player +=1
 
             if self.current_player >= 2:
-                print("%s and %s joned. ready to start" % (self.players[0],self.players[1]))
+                print("%s and %s joned. ready to start" % (self.players[0]["name"],self.players[1]["name"]))
                 return True
             # except:
             #     raise Exception(" Cannot Register")
@@ -111,6 +111,7 @@ class Game:
         self.logfile.write("START %s %s %s\n" % (self.players[0]["name"],self.players[1]["name"], gamename))
 
         self.current_player = 0
+        noWinner = True
 
         for self.round in range(1,self.cycle_count):
             try:
@@ -157,27 +158,37 @@ class Game:
             self.logfile.write("%s %s\n" % (str(self), "R" if isRandom else ""))
 
             if self.players[1 - self.current_player]["total"] < 3:
+                noWinner=False
                 self.logfile.write("winner %d\n" % self.current_player)
+                print("winner %d\n" % self.current_player)
                 break
 
             if dest is None:
-                score_0 = 0
-                score_1 = 0
-                for i in range(0,24):
-                    cell = self.board.cells[(int(i / 3), i % 3)]
-                    if cell.get_checker() == self.players[0]:
-                        score_0 +=1
-                    elif cell.get_checker() == self.players[1]:
-                        score_1 +=1
-                if score_0 == score_1:
-                    self.logfile.write("draw\n")
-                else:
-                    self.logfile.write("winner %d\n" % 0 if score_0 > score_1 else 1)
                 break
             self.current_player = 1 - self.current_player
+
+        if noWinner:
+            score_0 = 0
+            score_1 = 0
+            for i in range(0, 24):
+                cell = self.board.cells[(int(i / 3), i % 3)]
+                if cell.get_checker() == self.players[0]:
+                    score_0 += 1
+                elif cell.get_checker() == self.players[1]:
+                    score_1 += 1
+            if score_0 == score_1:
+                self.logfile.write("draw\n")
+                print("draw\n")
+            else:
+                self.logfile.write("winner %d\n" % (0 if score_0 > score_1 else 1))
+                print("winner %d" % (0 if score_0 > score_1 else 1))
 
         self.players[0]["sock"].send("FINISH".encode())
         self.players[1]["sock"].send("FINISH".encode())
 
+        self.players[0]["sock"].close()
+        self.players[1]["sock"].close()
+        self.serversock.close()
         self.logfile.close()
         self.messagefile.close()
+        print("GAME FINISHED after %d rounds!" % self.round)

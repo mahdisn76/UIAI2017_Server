@@ -38,11 +38,11 @@ class Board:
         if hasattr(cell, "neigbors"):
             return cell.neigbors
         cell.neigbors = []
-        y = cell.get_pos().gety()
         x = cell.get_pos().getx()
+        y = cell.get_pos().gety()
         if y < 2:
             cell.neigbors.append(self.cells[(x,y + 1)])
-        elif y > 0:
+        if y > 0:
             cell.neigbors.append(self.cells[(x,y - 1)])
         cell.neigbors.append(self.cells[((x + 1) % 8,y)])
         cell.neigbors.append(self.cells[((x - 1) % 8,y)])
